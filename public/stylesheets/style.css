@@ -1,0 +1,14 @@
+body {
+  padding: 50px;
+  /*font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;*/
+  font-family: 'Permanent Marker', cursive;
+  color: #fff;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.vote-wrapper {
+	padding: 20px;
+}
