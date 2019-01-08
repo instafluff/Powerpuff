@@ -13,6 +13,10 @@
     "express": "~4.16.0",
     "http-errors": "~1.6.2",
     "morgan": "~1.9.0",
-    "twig": "~0.10.3"
+    "nosql": "^6.1.0",
+    "parse-duration": "^0.1.1",
+    "socket.io": "^2.2.0",
+    "twig": "~0.10.3",
+    "twitch-js": "^1.2.17"
   }
 }

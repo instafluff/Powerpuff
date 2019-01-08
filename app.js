@@ -11,6 +11,8 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var TwitchJS = require('twitch-js');
+var parseduration = require('parse-duration');
 
 var app = express();
 
@@ -46,13 +48,13 @@ app.use(function(err, req, res, next) {
 });
 
 const Discord = require('discord.js');
-const client = new Discord.Client();
+const discord = new Discord.Client();
 
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+discord.on('ready', () => {
+  console.log(`Logged in as ${discord.user.tag}!`);
 });
 
-client.on('message', msg => {
+discord.on('message', msg => {
   var channel = msg.channel.name;
   var isBot = msg.author.bot;
   var user = msg.author.username;
@@ -65,13 +67,64 @@ client.on('message', msg => {
     const discordChannel = msg.member.guild.channels.find(ch => ch.name === 'powerpuff');
     // Do nothing if the channel wasn't found on this server
     if (!discordChannel) return;
-    discordChannel.send( "HELLO THIS IS POWERPUFF" );
-    // if (msg.content === 'ping') {
-    //   msg.reply('Pong!');
-    // }
+    // discordChannel.send( "HELLO THIS IS POWERPUFF" );
+    if (msg.content === 'ping') {
+      msg.reply('Pong!');
+    }
   }
 });
 
-client.login(process.env.DISCORDTOKEN);
+discord.login(process.env.DISCORDTOKEN);
+
+// Setup the client with your configuration; more details here:
+// https://github.com/twitch-apis/twitch-js/blob/master/docs/Chat/Configuration.md
+const options = {
+  channels: ["#" + process.env.TWITCHUSER],
+  // Provide an identity
+  identity: {
+    username: process.env.TWITCHUSER,
+    password: process.env.OAUTH
+  },
+};
+
+const twitch = new TwitchJS.client(options);
+
+// Add chat event listener that will respond to "!command" messages with:
+// "Hello world!".
+twitch.on('chat', (channel, userstate, message, self) => {
+  let isBroadcaster = ( "#" + userstate[ "username" ] ) == channel;
+  let isMod = userstate[ "mod" ];
+  let isVip = userstate[ "badges" ] && userstate[ "badges" ].vip;
+  let isSubscriber = userstate[ "subscriber" ];
+  let username = userstate[ "display-name" ];
+
+  if( isBroadcaster || isMod || isVip ) {
+    if( message.startsWith( "!idears " ) ) {
+      let idea = message.replace( "!idears ", "" );
+      if( idea ) {
+        // console.log( discord.channels );
+        const discordChannel = discord.channels.find(ch => ch.name.endsWith("idears") );
+        console.log( discordChannel );
+        // Do nothing if the channel wasn't found on this server
+        if( !discordChannel ) return;
+        discordChannel.send( idea );
+        twitch.say( channel, "Idea posted in Discord! (" + idea + ")" );
+      }
+    }
+  }
+
+  if( message.startsWith( "!remind " ) ) {
+    var reminder = message.replace( "!remind ", "" );
+    var duration = parseduration( message );
+    if( duration ) {
+      setTimeout( () => {
+        twitch.say( channel, "MrDestructoid BEEP BEEP for " + username + "! (" + reminder + ")" );
+      }, duration );
+    }
+  }
+});
+
+// Finally, connect to the channel
+twitch.connect();
 
 module.exports = app;
